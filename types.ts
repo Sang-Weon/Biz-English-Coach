@@ -1,0 +1,33 @@
+export enum AppState {
+  TOPIC_SELECTION = 'TOPIC_SELECTION',
+  BRIEFING_GENERATION = 'BRIEFING_GENERATION',
+  LISTENING_PHASE = 'LISTENING_PHASE',
+  SHADOWING_PHASE = 'SHADOWING_PHASE',
+  DISCUSSION_PHASE = 'DISCUSSION_PHASE',
+  DISCUSSION_FEEDBACK = 'DISCUSSION_FEEDBACK'
+}
+
+export interface BriefingContent {
+  fullText: string;
+  sentences: string[];
+  topic: string;
+}
+
+export interface ShadowingFeedback {
+  score: number; // 1-10
+  transcription: string;
+  feedback: string;
+  betterPronunciationTips: string;
+}
+
+export interface DiscussionFeedback {
+  correctedResponse: string;
+  grammarNotes: string;
+  vocabularySuggestions: string;
+  betterAlternative: string;
+}
+
+export interface AudioState {
+  isPlaying: boolean;
+  audioBuffer: AudioBuffer | null;
+}
