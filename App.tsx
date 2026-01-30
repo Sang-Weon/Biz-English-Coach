@@ -16,13 +16,23 @@ const App: React.FC = () => {
   const [discussionQuestion, setDiscussionQuestion] = useState<string>('');
   const [discussionFeedback, setDiscussionFeedback] = useState<DiscussionFeedback | null>(null);
   const [userRecordingUrl, setUserRecordingUrl] = useState<string | null>(null);
-  const [pendingBlob, setPendingBlob] = useState<Blob | null>(null); // New state to hold recording before submission
+  const [pendingBlob, setPendingBlob] = useState<Blob | null>(null);
   
   // Audio State
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [briefingAudio, setBriefingAudio] = useState<string | null>(null);
   const [discussionAudio, setDiscussionAudio] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  // Translation Tooltip State
+  const [tooltip, setTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+    translation?: string;
+    definition?: string;
+    loading: boolean;
+  } | null>(null);
 
   // Audio Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -45,7 +55,6 @@ const App: React.FC = () => {
 
     stopAudio(); // Stop any currently playing audio
 
-    // Race condition check: If user started recording while audio was generating, don't play.
     if (isUserRecordingRef.current) {
         return;
     }
@@ -86,6 +95,46 @@ const App: React.FC = () => {
       isUserRecordingRef.current = false;
   };
 
+  // Text Selection / Translation Logic
+  const handleTextSelection = async () => {
+    const selection = window.getSelection();
+    const text = selection?.toString().trim();
+    
+    if (!text || text.length < 2) {
+      setTooltip(null);
+      return;
+    }
+
+    const range = selection?.getRangeAt(0);
+    const rect = range?.getBoundingClientRect();
+
+    if (rect) {
+      const tooltipX = rect.left + window.scrollX + rect.width / 2;
+      const tooltipY = rect.top + window.scrollY - 10;
+      
+      setTooltip({ text, x: tooltipX, y: tooltipY, loading: true });
+
+      try {
+        const result = await Gemini.getTranslation(text);
+        setTooltip(prev => prev ? { ...prev, ...result, loading: false } : null);
+      } catch (err) {
+        console.error("Translation error:", err);
+        setTooltip(null);
+      }
+    }
+  };
+
+  // Dismiss tooltip when clicking elsewhere
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (!window.getSelection()?.toString().trim()) {
+        setTooltip(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // 1. Topic Selection
   useEffect(() => {
     const loadTopics = async () => {
@@ -112,13 +161,11 @@ const App: React.FC = () => {
       const content = await Gemini.generateBriefing(topic);
       setBriefing({...content, topic});
       
-      // Pre-generate audio for the briefing so it is ready
       const audio = await Gemini.generateSpeech(content.fullText);
       setBriefingAudio(audio);
       
       setCurrentState(AppState.LISTENING_PHASE);
       
-      // Auto-play after a short delay to allow UI to render
       setTimeout(() => {
           playAudio(audio, playbackSpeed);
       }, 500);
@@ -147,7 +194,6 @@ const App: React.FC = () => {
       playCurrentSentence();
   };
 
-  // 3. Shadowing Logic
   const playCurrentSentence = async () => {
      if (!briefing) return;
      const sentence = briefing.sentences[currentSentenceIndex];
@@ -161,29 +207,22 @@ const App: React.FC = () => {
   };
 
   const handleShadowingRecording = async (blob: Blob) => {
-    handleRecordingEnd(); // Reset lock
-    
-    // Just save the recording locally, do NOT analyze yet.
+    handleRecordingEnd();
     const url = URL.createObjectURL(blob);
     setUserRecordingUrl(url);
     setPendingBlob(blob);
-    
-    // Optional: Auto-play the user's recording so they can self-check immediately
-    // const userAudio = new Audio(url);
-    // userAudio.play();
   };
 
   const submitFeedbackRequest = async () => {
     if (!briefing || !pendingBlob) return;
 
-    setIsLoading(true); // Now we block for Analysis
+    setIsLoading(true);
     try {
       const base64 = await blobToBase64(pendingBlob);
       const targetText = briefing.sentences[currentSentenceIndex];
       const feedback = await Gemini.analyzeShadowing(base64, targetText);
       setShadowingFeedback(feedback);
 
-      // Generate text-to-speech for the feedback
       const spokenFeedback = `You scored ${feedback.score}. ${feedback.feedback}. ${feedback.betterPronunciationTips}`;
       
       const feedbackAudio = await Gemini.generateSpeech(spokenFeedback);
@@ -222,7 +261,6 @@ const App: React.FC = () => {
     }
   };
 
-  // 4. Discussion Logic
   const startDiscussionPhase = async () => {
       if (!briefing) return;
       setCurrentState(AppState.DISCUSSION_PHASE);
@@ -244,13 +282,6 @@ const App: React.FC = () => {
 
   const handleDiscussionRecording = async (blob: Blob) => {
       handleRecordingEnd();
-      
-      // For discussion, we can keep the immediate submission or make it manual too.
-      // The prompt specifically asked about "Next Sentence" flow (Shadowing).
-      // But for consistency, let's keep discussion automatic for now unless requested otherwise, 
-      // or we can treat discussion as "final answer". 
-      // Current implementation: Automatic.
-      
       setIsLoading(true);
       try {
           const base64 = await blobToBase64(blob);
@@ -314,10 +345,10 @@ const App: React.FC = () => {
   );
 
   const renderListeningPhase = () => (
-      <div className="max-w-2xl mx-auto w-full p-6 flex flex-col items-center min-h-[60vh] text-center space-y-6 animate-fade-in">
+      <div className="max-w-2xl mx-auto w-full p-6 flex flex-col items-center min-h-[60vh] text-center space-y-6 animate-fade-in relative">
           <div className="space-y-2">
               <h2 className="text-2xl font-bold text-slate-800">Listen Carefully</h2>
-              <p className="text-slate-500">Listen to the native intonation. Tap the speaker to play/pause.</p>
+              <p className="text-slate-500">Listen to the native intonation. Highlight any word to translate.</p>
           </div>
 
           <button 
@@ -349,7 +380,10 @@ const App: React.FC = () => {
               ))}
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full text-left">
+          <div 
+            className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm w-full text-left cursor-text selection:bg-blue-100 selection:text-blue-900"
+            onMouseUp={handleTextSelection}
+          >
               <p className="text-lg text-slate-700 leading-relaxed font-serif">
                   {briefing?.fullText}
               </p>
@@ -358,6 +392,37 @@ const App: React.FC = () => {
           <Button onClick={startShadowing} className="w-full max-w-sm mx-auto">
               Start Shadowing Practice
           </Button>
+
+          {/* Translation Tooltip */}
+          {tooltip && (
+            <div 
+              className="absolute z-50 bg-white border border-blue-200 shadow-2xl rounded-xl p-4 max-w-[280px] text-left animate-in fade-in zoom-in duration-200 pointer-events-auto"
+              style={{ 
+                left: `${tooltip.x}px`, 
+                top: `${tooltip.y}px`, 
+                transform: 'translate(-50%, -100%)' 
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {tooltip.loading ? (
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  Searching definition...
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">AI Translation</span>
+                    <span className="text-[10px] text-slate-400 font-mono">"{tooltip.text}"</span>
+                  </div>
+                  <p className="text-slate-900 font-bold border-b border-slate-100 pb-1">{tooltip.translation}</p>
+                  <p className="text-xs text-slate-600 italic leading-snug">{tooltip.definition}</p>
+                </div>
+              )}
+              {/* Arrow */}
+              <div className="absolute left-1/2 -bottom-2 -translate-x-1/2 w-4 h-4 bg-white border-r border-b border-blue-200 rotate-45"></div>
+            </div>
+          )}
       </div>
   );
 
@@ -377,10 +442,7 @@ const App: React.FC = () => {
               </p>
           </div>
 
-          {/* Interaction Area */}
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-               
-               {/* State 1: Ready to Record or Recording */}
                {!userRecordingUrl && !shadowingFeedback && (
                    <div className="flex flex-col items-center gap-4">
                        <p className="text-slate-500 mb-2">Repeat the sentence above clearly.</p>
@@ -392,7 +454,6 @@ const App: React.FC = () => {
                    </div>
                )}
 
-               {/* State 2: Recorded, pending user action (Listen or Submit) */}
                {userRecordingUrl && !shadowingFeedback && (
                    <div className="flex flex-col items-center gap-6">
                         <div className="text-center">
@@ -422,7 +483,6 @@ const App: React.FC = () => {
                    </div>
                )}
 
-               {/* State 3: Feedback Shown */}
                {shadowingFeedback && (
                    <div className="space-y-6">
                        <div className="flex items-center gap-4">
@@ -487,7 +547,6 @@ const App: React.FC = () => {
                      if (discussionAudio) {
                          playAudio(discussionAudio, playbackSpeed);
                      } else {
-                         // Fallback if audio wasn't generated for some reason
                          Gemini.generateSpeech(discussionQuestion).then(a => {
                              setDiscussionAudio(a);
                              playAudio(a, playbackSpeed);

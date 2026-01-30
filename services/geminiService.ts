@@ -4,13 +4,10 @@ const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
 // -- Constants --
-// Using 'gemini-3-flash-preview' for logic/text as it's fast and capable.
-// Using 'gemini-3-pro-preview' for high-quality content generation.
-// Using 'gemini-2.5-flash-preview-tts' for TTS.
 const TEXT_MODEL = 'gemini-3-flash-preview';
 const CONTENT_MODEL = 'gemini-3-pro-preview'; 
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-const AUDIO_ANALYSIS_MODEL = 'gemini-3-flash-preview'; // Good for multimodal
+const AUDIO_ANALYSIS_MODEL = 'gemini-3-flash-preview';
 
 export const generateTopics = async (): Promise<string[]> => {
   const response = await ai.models.generateContent({
@@ -66,7 +63,6 @@ export const generateBriefing = async (topic: string): Promise<{ fullText: strin
 };
 
 export const generateSpeech = async (text: string): Promise<string> => {
-  // Returns Base64 Audio
   const response = await ai.models.generateContent({
     model: TTS_MODEL,
     contents: [{ parts: [{ text }] }],
@@ -74,7 +70,7 @@ export const generateSpeech = async (text: string): Promise<string> => {
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: {
-          prebuiltVoiceConfig: { voiceName: 'Kore' }, // 'Kore' is a good, deep voice.
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
         },
       },
     },
@@ -83,6 +79,36 @@ export const generateSpeech = async (text: string): Promise<string> => {
   const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
   if (!base64Audio) throw new Error("No audio generated");
   return base64Audio;
+};
+
+export const getTranslation = async (text: string): Promise<{ translation: string; definition: string }> => {
+  const prompt = `
+    Acts as a professional business English dictionary.
+    Provide a Korean translation and a brief English definition for this term found in a business news context: "${text}".
+    Keep it concise.
+    Return JSON format: {"translation": "한국어 뜻", "definition": "Brief English business definition"}.
+  `;
+
+  const response = await ai.models.generateContent({
+    model: TEXT_MODEL,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          translation: { type: Type.STRING },
+          definition: { type: Type.STRING }
+        },
+        required: ["translation", "definition"]
+      }
+    }
+  });
+
+  if (response.text) {
+    return JSON.parse(response.text);
+  }
+  throw new Error("Translation failed");
 };
 
 export const analyzeShadowing = async (audioBase64: string, targetText: string): Promise<any> => {
@@ -101,7 +127,7 @@ export const analyzeShadowing = async (audioBase64: string, targetText: string):
     model: AUDIO_ANALYSIS_MODEL,
     contents: {
       parts: [
-        { inlineData: { mimeType: 'audio/wav', data: audioBase64 } }, // Assuming recorder produces wav or webm/pcm mapped to wav
+        { inlineData: { mimeType: 'audio/wav', data: audioBase64 } },
         { text: prompt }
       ]
     },
