@@ -9,10 +9,14 @@ const CONTENT_MODEL = 'gemini-3-pro-preview';
 const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const AUDIO_ANALYSIS_MODEL = 'gemini-3-flash-preview';
 
-export const generateTopics = async (): Promise<string[]> => {
+export const generateTopics = async (categories?: string[]): Promise<string[]> => {
+  const categoryFilter = categories && categories.length > 0 
+    ? `Focus on these categories: ${categories.join(', ')}. ` 
+    : '';
+  
   const response = await ai.models.generateContent({
     model: TEXT_MODEL,
-    contents: "Identify 5 currently trending hot topics related to US business, the stock market, AI technology, or the global economy. Return only a JSON array of strings, e.g., [\"Nvidia's AI Rally\", \"Fed Interest Rates\", ...]",
+    contents: `${categoryFilter}Identify 5 currently trending hot topics related to US business, the stock market, AI technology, or the global economy. Return only a JSON array of strings, e.g., ["Nvidia's AI Rally", "Fed Interest Rates", ...]`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
