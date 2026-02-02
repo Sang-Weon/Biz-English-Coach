@@ -101,34 +101,34 @@ export const Recorder: React.FC<RecorderProps> = ({ onRecordingComplete, onStart
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-full h-24 bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+    <div className="flex flex-col items-center gap-3 sm:gap-4 w-full">
+      <div className="relative w-full h-20 sm:h-24 bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
         {!isRecording && !isProcessing && (
-           <span className="text-slate-400 text-sm">Waveform Visualization</span>
+           <span className="text-slate-400 text-xs sm:text-sm">Waveform Visualization</span>
         )}
-        <canvas ref={canvasRef} width={300} height={100} className="w-full h-full absolute inset-0" />
+        <canvas ref={canvasRef} width={300} height={100} className="w-full h-full absolute inset-0" style={{ maxWidth: '100%' }} />
       </div>
 
       <button
         onClick={isRecording ? stopRecording : startRecording}
         disabled={isProcessing}
-        className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
+        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition-all duration-300 touch-manipulation ${
           isRecording 
             ? 'bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.6)] scale-110' 
-            : 'bg-blue-600 hover:bg-blue-700 shadow-lg'
+            : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-lg'
         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {isProcessing ? (
-           <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+           <div className="w-6 h-6 sm:w-8 sm:h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
         ) : isRecording ? (
-          <div className="w-8 h-8 bg-white rounded-md"></div>
+          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded-md"></div>
         ) : (
-          <svg className="w-10 h-10 text-white translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
           </svg>
         )}
       </button>
-      <span className="text-sm font-medium text-slate-600">
+      <span className="text-xs sm:text-sm font-medium text-slate-600 text-center px-4">
         {isRecording ? "Listening... Tap to Stop" : label}
       </span>
     </div>

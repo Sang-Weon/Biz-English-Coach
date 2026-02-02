@@ -9,31 +9,31 @@
 ## Environment Setup
 
 1. Create a `.env.local` file in the project root:
-```bash
+\`\`\`bash
 GEMINI_API_KEY=your_actual_api_key_here
-```
+\`\`\`
 
 ## Local Development
 
-```bash
+\`\`\`bash
 # Install dependencies
 npm install
 
 # Run development server
 npm run dev
-```
+\`\`\`
 
 The app will be available at `http://localhost:3000`
 
 ## Building for Production
 
-```bash
+\`\`\`bash
 # Build the app
 npm run build
 
 # Preview the production build
 npm run preview
-```
+\`\`\`
 
 The built files will be in the `dist/` directory.
 
@@ -42,14 +42,14 @@ The built files will be in the `dist/` directory.
 ### Option 1: Vercel (Recommended)
 
 1. Install Vercel CLI:
-```bash
+\`\`\`bash
 npm i -g vercel
-```
+\`\`\`
 
 2. Deploy:
-```bash
+\`\`\`bash
 vercel
-```
+\`\`\`
 
 3. Add environment variable in Vercel dashboard:
    - Go to your project settings
@@ -58,15 +58,15 @@ vercel
 ### Option 2: Netlify
 
 1. Install Netlify CLI:
-```bash
+\`\`\`bash
 npm i -g netlify-cli
-```
+\`\`\`
 
 2. Build and deploy:
-```bash
+\`\`\`bash
 npm run build
 netlify deploy --prod --dir=dist
-```
+\`\`\`
 
 3. Add environment variable in Netlify dashboard:
    - Go to Site settings > Environment variables
@@ -75,31 +75,31 @@ netlify deploy --prod --dir=dist
 ### Option 3: GitHub Pages
 
 1. Update `vite.config.ts` with your GitHub repo name:
-```typescript
+\`\`\`typescript
 export default defineConfig({
   base: '/your-repo-name/',
   // ... rest of config
 })
-```
+\`\`\`
 
 2. Add deployment script to `package.json`:
-```json
+\`\`\`json
 {
   "scripts": {
     "deploy": "npm run build && gh-pages -d dist"
   }
 }
-```
+\`\`\`
 
 3. Install gh-pages:
-```bash
+\`\`\`bash
 npm install --save-dev gh-pages
-```
+\`\`\`
 
 4. Deploy:
-```bash
+\`\`\`bash
 npm run deploy
-```
+\`\`\`
 
 ## Mobile & PWA Features
 
