@@ -1,4 +1,5 @@
 export enum AppState {
+  ONBOARDING = 'ONBOARDING',
   TOPIC_SELECTION = 'TOPIC_SELECTION',
   BRIEFING_GENERATION = 'BRIEFING_GENERATION',
   LISTENING_PHASE = 'LISTENING_PHASE',
@@ -30,4 +31,9 @@ export interface DiscussionFeedback {
 export interface AudioState {
   isPlaying: boolean;
   audioBuffer: AudioBuffer | null;
+}
+
+export interface UserPreferences {
+  categories: string[];
+  hasCompletedOnboarding: boolean;
 }
