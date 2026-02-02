@@ -87,7 +87,8 @@ export default function HomePage() {
     }
   };
 
-  const playAudio = async (base64: string, speed: number = 1.0, onEnded?: () => void) => {
+  const playAudio = async (base64: string | null, speed: number = 1.0, onEnded?: () => void) => {
+    if (!base64) return; // Skip if no audio (demo mode)
     initAudio();
     if (!audioContextRef.current) return;
 
@@ -203,9 +204,12 @@ export default function HomePage() {
 
       setCurrentState(AppState.LISTENING_PHASE);
 
-      setTimeout(() => {
-        playAudio(audio, playbackSpeed);
-      }, 500);
+      // Only play audio if available (not in demo mode)
+      if (audio) {
+        setTimeout(() => {
+          playAudio(audio, playbackSpeed);
+        }, 500);
+      }
     } catch (error) {
       console.error(error);
       alert("Failed to generate briefing.");
@@ -236,7 +240,9 @@ export default function HomePage() {
 
     try {
       const audio = await Gemini.generateSpeech(sentence);
-      playAudio(audio, playbackSpeed);
+      if (audio) {
+        playAudio(audio, playbackSpeed);
+      }
     } catch (e) {
       console.error("Failed to play sentence audio", e);
     }
@@ -261,7 +267,9 @@ export default function HomePage() {
 
       const spokenFeedback = `You scored ${feedback.score}. ${feedback.feedback}. ${feedback.betterPronunciationTips}`;
       const feedbackAudio = await Gemini.generateSpeech(spokenFeedback);
-      playAudio(feedbackAudio, 1.0);
+      if (feedbackAudio) {
+        playAudio(feedbackAudio, 1.0);
+      }
     } catch (e) {
       console.error(e);
       alert("Analysis failed.");
@@ -288,7 +296,9 @@ export default function HomePage() {
       setCurrentSentenceIndex(prev => prev + 1);
       setTimeout(() => {
         const nextText = briefing.sentences[currentSentenceIndex + 1];
-        Gemini.generateSpeech(nextText).then(audio => playAudio(audio, playbackSpeed));
+        Gemini.generateSpeech(nextText).then(audio => {
+          if (audio) playAudio(audio, playbackSpeed);
+        });
       }, 100);
     } else {
       startDiscussionPhase();
@@ -307,7 +317,9 @@ export default function HomePage() {
 
       const audio = await Gemini.generateSpeech(question);
       setDiscussionAudio(audio);
-      playAudio(audio, playbackSpeed);
+      if (audio) {
+        playAudio(audio, playbackSpeed);
+      }
     } catch (e) {
       console.error(e);
       setIsLoading(false);

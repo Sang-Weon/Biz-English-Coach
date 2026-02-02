@@ -21,7 +21,7 @@ export const generateBriefing = async (topic: string): Promise<{ fullText: strin
   return response.json();
 };
 
-export const generateSpeech = async (text: string): Promise<string> => {
+export const generateSpeech = async (text: string): Promise<string | null> => {
   const response = await fetch('/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +29,8 @@ export const generateSpeech = async (text: string): Promise<string> => {
   });
   if (!response.ok) throw new Error('Failed to generate speech');
   const data = await response.json();
-  return data.audio;
+  // In demo mode, audio will be null
+  return data.audio || null;
 };
 
 export const getTranslation = async (text: string): Promise<{ translation: string; definition: string }> => {

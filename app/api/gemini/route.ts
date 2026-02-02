@@ -2,12 +2,31 @@ import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
 const apiKey = process.env.GEMINI_API_KEY || '';
+const DEMO_MODE = !apiKey;
 
-if (!apiKey) {
-  console.error("[v0] GEMINI_API_KEY is not set");
+if (DEMO_MODE) {
+  console.warn("[v0] GEMINI_API_KEY is not set - Running in demo mode");
 }
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+// Demo data for when API key is not available
+const DEMO_TOPICS = [
+  "Nvidia's AI Chip Dominance Fuels Stock Rally",
+  "Federal Reserve Signals Rate Cut Timeline",
+  "Apple Vision Pro Launch Reshapes AR Market",
+  "Tesla's Robotaxi Plans Face Regulatory Hurdles",
+  "Microsoft Azure AI Services Revenue Surge"
+];
+
+const DEMO_BRIEFING = {
+  fullText: "Nvidia continues to dominate the artificial intelligence chip market, with its stock price reaching new all-time highs this quarter. The company's data center revenue has grown by over 400% year-over-year, driven by unprecedented demand for AI training and inference capabilities. Analysts predict that Nvidia's market leadership will persist as major tech companies race to build out their AI infrastructure.",
+  sentences: [
+    "Nvidia continues to dominate the artificial intelligence chip market, with its stock price reaching new all-time highs this quarter.",
+    "The company's data center revenue has grown by over 400% year-over-year, driven by unprecedented demand for AI training and inference capabilities.",
+    "Analysts predict that Nvidia's market leadership will persist as major tech companies race to build out their AI infrastructure."
+  ]
+};
 
 const TEXT_MODEL = 'gemini-2.5-flash-preview-04-17';
 const CONTENT_MODEL = 'gemini-2.5-flash-preview-04-17';
@@ -15,13 +34,14 @@ const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 const AUDIO_ANALYSIS_MODEL = 'gemini-2.5-flash-preview-04-17';
 
 export async function POST(request: NextRequest) {
-  if (!ai) {
-    return NextResponse.json({ error: "GEMINI_API_KEY is not configured" }, { status: 500 });
-  }
-
   try {
     const body = await request.json();
     const { action, ...params } = body;
+
+    // Handle demo mode
+    if (DEMO_MODE) {
+      return handleDemoMode(action, params);
+    }
 
     switch (action) {
       case 'generateTopics':
@@ -44,6 +64,44 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[v0] Gemini API error:", error);
     return NextResponse.json({ error: "API request failed" }, { status: 500 });
+  }
+}
+
+// Demo mode handler - returns sample data when API key is not available
+function handleDemoMode(action: string, params: Record<string, unknown>) {
+  switch (action) {
+    case 'generateTopics':
+      return NextResponse.json(DEMO_TOPICS);
+    case 'generateBriefing':
+      return NextResponse.json(DEMO_BRIEFING);
+    case 'generateSpeech':
+      // Return empty audio in demo mode - UI will handle this gracefully
+      return NextResponse.json({ audio: null, demoMode: true });
+    case 'getTranslation':
+      return NextResponse.json({
+        translation: "데모 모드 - API 키를 설정하세요",
+        definition: "Demo mode - Please set your GEMINI_API_KEY to enable translations"
+      });
+    case 'analyzeShadowing':
+      return NextResponse.json({
+        transcription: "Demo mode - your speech would be transcribed here",
+        score: 8,
+        feedback: "In demo mode, we cannot analyze your pronunciation. Please add your GEMINI_API_KEY to enable full functionality.",
+        betterPronunciationTips: "Add your API key to get personalized pronunciation tips."
+      });
+    case 'generateDiscussionQuestion':
+      return NextResponse.json({
+        question: "What do you think about the impact of AI on the job market?"
+      });
+    case 'analyzeDiscussionResponse':
+      return NextResponse.json({
+        correctedResponse: "Demo mode - your response would be analyzed here",
+        grammarNotes: "Add your GEMINI_API_KEY to get grammar feedback.",
+        vocabularySuggestions: "Add your API key for vocabulary suggestions.",
+        betterAlternative: "Add your API key to see native speaker alternatives."
+      });
+    default:
+      return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
 }
 
