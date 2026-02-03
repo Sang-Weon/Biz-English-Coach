@@ -67,6 +67,9 @@ export default function HomePage() {
     loading: boolean;
   } | null>(null);
 
+  // State for onboarding category selection
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const isUserRecordingRef = useRef<boolean>(false);
@@ -342,29 +345,31 @@ export default function HomePage() {
     }
   };
 
+  // Sync selectedCategories when userPreferences change
+  useEffect(() => {
+    setSelectedCategories(userPreferences.categories);
+  }, [userPreferences.categories]);
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(c => c !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
+
+  const completeOnboarding = () => {
+    const newPrefs: UserPreferences = {
+      categories: selectedCategories,
+      hasCompletedOnboarding: true,
+    };
+    setUserPreferences(newPrefs);
+    savePreferences(newPrefs);
+    setCurrentState(AppState.TOPIC_SELECTION);
+  };
+
   // Render functions
-  const renderOnboarding = () => {
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(userPreferences.categories);
-
-    const toggleCategory = (categoryId: string) => {
-      setSelectedCategories(prev =>
-        prev.includes(categoryId)
-          ? prev.filter(c => c !== categoryId)
-          : [...prev, categoryId]
-      );
-    };
-
-    const completeOnboarding = () => {
-      const newPrefs: UserPreferences = {
-        categories: selectedCategories,
-        hasCompletedOnboarding: true,
-      };
-      setUserPreferences(newPrefs);
-      savePreferences(newPrefs);
-      setCurrentState(AppState.TOPIC_SELECTION);
-    };
-
-    return (
+  const renderOnboarding = () => (
       <div className="max-w-4xl mx-auto w-full p-4 sm:p-6 animate-in fade-in duration-500">
         <div className="text-center mb-8 sm:mb-12">
           <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-2xl sm:text-3xl mx-auto mb-4 sm:mb-6">
@@ -428,8 +433,7 @@ export default function HomePage() {
           </button>
         )}
       </div>
-    );
-  };
+  );
 
   const renderHeader = () => (
     <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center sticky top-0 z-10">
