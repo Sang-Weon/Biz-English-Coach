@@ -2,13 +2,22 @@
 // All actual API calls are made through the server-side Route Handler
 
 export const generateTopics = async (categories?: string[]): Promise<string[]> => {
-  const response = await fetch('/api/gemini', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'generateTopics', categories }),
-  });
-  if (!response.ok) throw new Error('Failed to generate topics');
-  return response.json();
+  try {
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generateTopics', categories }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[v0] generateTopics error:', response.status, errorData);
+      throw new Error(errorData.error || 'Failed to generate topics');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('[v0] generateTopics fetch error:', error);
+    throw error;
+  }
 };
 
 export const generateBriefing = async (topic: string): Promise<{ fullText: string; sentences: string[] }> => {

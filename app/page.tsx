@@ -181,11 +181,20 @@ export default function HomePage() {
         const categories = userPreferences.categories.length > 0
           ? userPreferences.categories
           : undefined;
+        console.log("[v0] Loading topics with categories:", categories);
         const fetchedTopics = await Gemini.generateTopics(categories);
+        console.log("[v0] Topics loaded:", fetchedTopics);
         setTopics(fetchedTopics);
       } catch (error) {
-        console.error(error);
-        alert("Failed to load topics. Check API Key.");
+        console.error("[v0] Failed to load topics:", error);
+        // Show default topics on error
+        setTopics([
+          "AI Technology Trends",
+          "Stock Market Updates", 
+          "Global Economy News",
+          "Tech Company Earnings",
+          "Startup Funding News"
+        ]);
       } finally {
         setIsLoading(false);
       }

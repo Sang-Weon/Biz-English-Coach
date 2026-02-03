@@ -38,8 +38,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action, ...params } = body;
 
+    console.log("[v0] API called with action:", action, "DEMO_MODE:", DEMO_MODE);
+
     // Handle demo mode
     if (DEMO_MODE) {
+      console.log("[v0] Handling in demo mode for action:", action);
       return handleDemoMode(action, params);
     }
 
@@ -63,7 +66,8 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("[v0] Gemini API error:", error);
-    return NextResponse.json({ error: "API request failed" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "API request failed";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 
