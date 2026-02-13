@@ -15,7 +15,7 @@ export interface BriefingContent {
 }
 
 export interface ShadowingFeedback {
-  score: number; // 1-10
+  score: number;
   transcription: string;
   feedback: string;
   betterPronunciationTips: string;
@@ -26,11 +26,6 @@ export interface DiscussionFeedback {
   grammarNotes: string;
   vocabularySuggestions: string;
   betterAlternative: string;
-}
-
-export interface AudioState {
-  isPlaying: boolean;
-  audioBuffer: AudioBuffer | null;
 }
 
 export interface UserPreferences {

@@ -1,7 +1,0 @@
-{
-  "name": "NativeBiz English Coach",
-  "description": "An immersive business English tutor application that simulates a US native speaker to improve your professional communication skills through briefing, shadowing, and discussion.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}

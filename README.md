@@ -21,19 +21,19 @@ Master business English through real-world news and AI-powered coaching.
 **Prerequisites:**  Node.js (v18+)
 
 1. Install dependencies:
-   ```bash
+   \`\`\`bash
    npm install
-   ```
+   \`\`\`
 
 2. Set the `GEMINI_API_KEY` in `.env.local`:
-   ```bash
+   \`\`\`bash
    GEMINI_API_KEY=your_api_key_here
-   ```
+   \`\`\`
 
 3. Run the app:
-   ```bash
+   \`\`\`bash
    npm run dev
-   ```
+   \`\`\`
 
 4. Open [http://localhost:3000](http://localhost:3000)
 

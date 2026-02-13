@@ -8,29 +8,21 @@ export const decodeAudioData = async (
   for (let i = 0; i < len; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
-  
-  // For Gemini TTS (PCM 24000Hz), we need to manually decode if it's raw PCM
-  // However, the new API sometimes wraps it. 
-  // If the header is missing (raw PCM), we interpret manually. 
-  // Standard decodeAudioData works if the container format is valid (WAV/MP3).
-  // The Gemini prompt examples suggest manual PCM decoding for raw streams.
-  // We will try standard decode first (if header exists), fallback to PCM if it fails.
 
   try {
-     const buffer = await audioContext.decodeAudioData(bytes.buffer.slice(0));
-     return buffer;
-  } catch (e) {
-    // Fallback for raw PCM 24000Hz mono (typical for Gemini TTS unless specified otherwise)
+    const buffer = await audioContext.decodeAudioData(bytes.buffer.slice(0));
+    return buffer;
+  } catch {
+    // Fallback for raw PCM 24000Hz mono (typical for Gemini TTS)
     const pcmData = new Int16Array(bytes.buffer);
     const channels = 1;
     const sampleRate = 24000;
     const frameCount = pcmData.length;
     const audioBuffer = audioContext.createBuffer(channels, frameCount, sampleRate);
     const channelData = audioBuffer.getChannelData(0);
-    
+
     for (let i = 0; i < frameCount; i++) {
-        // Convert Int16 to Float32
-        channelData[i] = pcmData[i] / 32768.0; 
+      channelData[i] = pcmData[i] / 32768.0;
     }
     return audioBuffer;
   }
