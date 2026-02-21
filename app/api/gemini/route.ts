@@ -28,10 +28,10 @@ const DEMO_BRIEFING = {
   ]
 };
 
-const TEXT_MODEL = 'gemini-2.5-flash-preview-04-17';
-const CONTENT_MODEL = 'gemini-2.5-flash-preview-04-17';
-const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
-const AUDIO_ANALYSIS_MODEL = 'gemini-2.5-flash-preview-04-17';
+const TEXT_MODEL = 'gemini-2.5-flash';
+const CONTENT_MODEL = 'gemini-2.5-flash';
+const TTS_MODEL = 'gemini-2.5-flash-tts';
+const AUDIO_ANALYSIS_MODEL = 'gemini-2.5-flash';
 
 export async function POST(request: NextRequest) {
   try {
